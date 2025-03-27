@@ -8,6 +8,7 @@ use App\Filament\Resources\SchoolResource\Pages;
 use App\Filament\Resources\SchoolResource\RelationManagers;
 use App\Models\School;
 use Filament\Forms;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,6 +16,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Http;
 
 class SchoolResource extends Resource
 {
@@ -35,10 +37,20 @@ class SchoolResource extends Resource
         return $form
             ->schema([
                 Section::make([
-                    Forms\Components\TextInput::make('name')
+                    Forms\Components\Select::make('selectSchool')
+                        ->reactive()
+                        ->getSearchResultsUsing(fn (string $query) => self::searchSchools($query))
+                        ->afterStateUpdated(fn ($state, callable $set) => self::fillSchoolData($state, $set))
                         ->required()
+                        ->searchable()
                         ->label('Nome')
-                        ->maxLength(150),
+                        ->visible(fn ($livewire) => $livewire instanceof Pages\CreateSchool),
+                    Forms\Components\TextInput::make('name')
+                        ->label('Nome')
+                        ->required()
+                        ->maxLength(150)
+                        ->visible(fn ($livewire) => $livewire instanceof Pages\EditSchool),
+                    Hidden::make('name')->visible(fn ($livewire) => $livewire instanceof Pages\CreateSchool),
                     Forms\Components\TextInput::make('address')
                         ->label('Endereço')
                         ->required()
@@ -51,14 +63,18 @@ class SchoolResource extends Resource
                     Forms\Components\TextInput::make('contact')
                         ->label('Contato')
                         ->maxLength(100),
-                    Forms\Components\Select::make('sessions')
+                    Forms\Components\Select::make('shifts')
+                        ->relationship('shifts', 'name')
+                        ->searchable()
+                        ->preload()
                         ->label('Turnos')
-                        ->multiple()
-                        ->options(SchoolSessions::options()),
+                        ->multiple(),
                     Forms\Components\Select::make('grades')
+                        ->relationship('grades', 'name')
+                        ->searchable()
+                        ->preload()
                         ->label('Séries')
                         ->multiple()
-                        ->options(SchoolGrade::options()),
                 ])
             ]);
     }
@@ -73,9 +89,6 @@ class SchoolResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('address')
                     ->label('Endereço')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('contact')
-                    ->label('Contato')
                     ->searchable(),
             ])
             ->filters([
@@ -114,4 +127,42 @@ class SchoolResource extends Resource
             'edit' => Pages\EditSchool::route('/{record}/edit'),
         ];
     }
+
+    public static function searchSchools(string $query): array
+{
+    $response = Http::get(config('sme.escolas.api.url'), ['search' => $query]);
+
+    if ($response->failed()) {
+        return [];
+    }
+
+    $data = $response->json();
+
+    session(['results' => $data['results']]);
+
+    return collect($data['results'])->mapWithKeys(fn ($school) => [
+        $school['codesc'] => $school['tipoesc'] . ' '. $school['nomesc']
+    ])->toArray();
+
+}
+
+public static function fillSchoolData($schoolId, callable $set)
+{
+    if (!$schoolId) {
+        return;
+    }
+
+    $schools = collect(session('results'));
+
+
+    if ($schools->isNotEmpty()) {
+        $school = $schools->where('codesc', $schoolId)->first();
+        $set('name', $school['tipoesc'] . ' '. $school['nomesc'] ?? '');
+        $set('address', "{$school['endereco']}, {$school['bairro']}, {$school['numero']}" ?? '');
+        $set('contact', $school['email'] ?? '');
+        $set('map_location', "https://www.google.com/maps?q={$school['latitude']},{$school['longitude']}" ?? '');
+    }
+
+    session()->forget('results');
+}
 }

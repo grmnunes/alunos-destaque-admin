@@ -23,8 +23,18 @@ class School extends Model
         'grades'
     ];
 
-    protected $casts = [
-        'sessions' => EnumToArrayCast::class . ':' . SchoolSessions::class,
-        'grades' => EnumToArrayCast::class . ':' . SchoolGrade::class
-    ];
+    public function students()
+    {
+        return $this->hasMany(Student::class);
+    }
+
+    public function shifts()
+    {
+        return $this->belongsToMany(Shift::class);
+    }
+
+    public function grades()
+    {
+        return $this->belongsToMany(Grade::class);
+    }
 }

@@ -1,0 +1,18 @@
+<?php
+
+namespace App\Http\Controllers\Api;
+
+use App\Http\Controllers\Controller;
+use App\Http\Resources\AwardResource;
+use App\Models\Award;
+use Illuminate\Http\Request;
+
+class AwardController extends Controller
+{
+    public function index()
+    {
+        $awards = Award::orderBy('date', 'DESC')->get();
+        
+        return AwardResource::collection($awards);
+    }
+}

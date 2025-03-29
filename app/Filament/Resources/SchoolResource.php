@@ -2,10 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Enums\SchoolGrade;
-use App\Enums\SchoolSessions;
 use App\Filament\Resources\SchoolResource\Pages;
-use App\Filament\Resources\SchoolResource\RelationManagers;
 use App\Models\School;
 use Filament\Forms;
 use Filament\Forms\Components\Hidden;
@@ -14,8 +11,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Http;
 
 class SchoolResource extends Resource
@@ -74,8 +69,8 @@ class SchoolResource extends Resource
                         ->searchable()
                         ->preload()
                         ->label('Séries')
-                        ->multiple()
-                ])
+                        ->multiple(),
+                ]),
             ]);
     }
 
@@ -102,7 +97,7 @@ class SchoolResource extends Resource
                     ->button()
                     ->url(fn (School $record): string => $record->map_location)
                     ->openUrlInNewTab()
-                    ->hidden(fn (School $record) => !$record->map_location),
+                    ->hidden(fn (School $record) => ! $record->map_location),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
@@ -129,40 +124,39 @@ class SchoolResource extends Resource
     }
 
     public static function searchSchools(string $query): array
-{
-    $response = Http::get(config('sme.escolas.api.url'), ['search' => $query]);
+    {
+        $response = Http::get(config('sme.escolas.api.url'), ['search' => $query]);
 
-    if ($response->failed()) {
-        return [];
+        if ($response->failed()) {
+            return [];
+        }
+
+        $data = $response->json();
+
+        session(['results' => $data['results']]);
+
+        return collect($data['results'])->mapWithKeys(fn ($school) => [
+            $school['codesc'] => $school['tipoesc'].' '.$school['nomesc'],
+        ])->toArray();
+
     }
 
-    $data = $response->json();
+    public static function fillSchoolData($schoolId, callable $set)
+    {
+        if (! $schoolId) {
+            return;
+        }
 
-    session(['results' => $data['results']]);
+        $schools = collect(session('results'));
 
-    return collect($data['results'])->mapWithKeys(fn ($school) => [
-        $school['codesc'] => $school['tipoesc'] . ' '. $school['nomesc']
-    ])->toArray();
+        if ($schools->isNotEmpty()) {
+            $school = $schools->where('codesc', $schoolId)->first();
+            $set('name', $school['tipoesc'].' '.$school['nomesc'] ?? '');
+            $set('address', "{$school['endereco']}, {$school['bairro']}, {$school['numero']}" ?? '');
+            $set('contact', $school['email'] ?? '');
+            $set('map_location', "https://www.google.com/maps?q={$school['latitude']},{$school['longitude']}" ?? '');
+        }
 
-}
-
-public static function fillSchoolData($schoolId, callable $set)
-{
-    if (!$schoolId) {
-        return;
+        session()->forget('results');
     }
-
-    $schools = collect(session('results'));
-
-
-    if ($schools->isNotEmpty()) {
-        $school = $schools->where('codesc', $schoolId)->first();
-        $set('name', $school['tipoesc'] . ' '. $school['nomesc'] ?? '');
-        $set('address', "{$school['endereco']}, {$school['bairro']}, {$school['numero']}" ?? '');
-        $set('contact', $school['email'] ?? '');
-        $set('map_location', "https://www.google.com/maps?q={$school['latitude']},{$school['longitude']}" ?? '');
-    }
-
-    session()->forget('results');
-}
 }

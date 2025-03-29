@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\AwardResource\Pages;
-use App\Filament\Resources\AwardResource\RelationManagers;
 use App\Models\Award;
 use App\Models\School;
 use Filament\Forms;
@@ -13,8 +12,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class AwardResource extends Resource
 {
@@ -53,8 +50,8 @@ class AwardResource extends Resource
                                 ->searchable()
                                 ->reactive()
                                 ->preload()
-                                ->afterStateUpdated(function($set, $state) {
-                                    $set('students', null); 
+                                ->afterStateUpdated(function ($set, $state) {
+                                    $set('students', null);
                                 }),
                             Select::make('students')
                                 ->label('Alunos')
@@ -62,17 +59,17 @@ class AwardResource extends Resource
                                 ->reactive()
                                 ->preload()
                                 ->multiple()
-                                ->options(function($get) {
+                                ->options(function ($get) {
                                     $schoolId = $get('school_id');
-                                    
+
                                     if ($schoolId) {
                                         $school = School::find($schoolId);
-            
+
                                         return $school->students->pluck('name', 'id')->toArray() ?? [];
                                     }
-            
+
                                     return [];
-                                })
+                                }),
                         ]),
                 ]),
             ]);

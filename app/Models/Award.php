@@ -15,10 +15,10 @@ class Award extends Model
         'date',
         'title',
         'description',
-        'items'
+        'items',
     ];
 
     protected $casts = [
-        'items' => 'array'
+        'items' => 'array',
     ];
 }

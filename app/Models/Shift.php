@@ -10,9 +10,9 @@ class Shift extends Model
 {
     use HasUlids;
     use SoftDeletes;
-    
+
     protected $fillable = [
-        'name'
+        'name',
     ];
 
     public function schools()

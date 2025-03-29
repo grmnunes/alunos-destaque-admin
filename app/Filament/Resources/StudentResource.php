@@ -2,9 +2,7 @@
 
 namespace App\Filament\Resources;
 
-use App\Enums\SchoolSessions;
 use App\Filament\Resources\StudentResource\Pages;
-use App\Filament\Resources\StudentResource\RelationManagers;
 use App\Models\School;
 use App\Models\Student;
 use Filament\Forms;
@@ -13,8 +11,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class StudentResource extends Resource
 {
@@ -35,53 +31,58 @@ class StudentResource extends Resource
         return $form
             ->schema([
                 Section::make([
+                    Forms\Components\FileUpload::make('image')
+                        ->image()
+                        ->imageEditor()
+                        ->directory('students'),
                     Forms\Components\TextInput::make('name')
-                    ->label('Nome')
-                    ->required()
-                    ->maxLength(150),
-                Forms\Components\TextInput::make('registration_number')
-                    ->label('Matrícula')
-                    ->required()
-                    ->maxLength(12),
-                Forms\Components\Select::make('school_id')
-                    ->label('Escola')
-                    ->relationship('school', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->reactive()
-                    ->afterStateUpdated(function($set, $state) {
-                        $set('session', null);
-                        $set('grade', null); 
-                    })
-                    ->required(),
-                Forms\Components\Select::make('shift_id')
-                    ->label('Turno')
-                    ->options(function($get) {
-                        $schoolId = $get('school_id');
-                        
-                        if ($schoolId) {
-                            $school = School::find($schoolId);
+                        ->label('Nome')
+                        ->required()
+                        ->maxLength(150),
+                    Forms\Components\TextInput::make('registration_number')
+                        ->label('Matrícula')
+                        ->unique()
+                        ->required()
+                        ->maxLength(12),
+                    Forms\Components\Select::make('school_id')
+                        ->label('Escola')
+                        ->relationship('school', 'name')
+                        ->searchable()
+                        ->preload()
+                        ->reactive()
+                        ->afterStateUpdated(function ($set, $state) {
+                            $set('session', null);
+                            $set('grade', null);
+                        })
+                        ->required(),
+                    Forms\Components\Select::make('shift_id')
+                        ->label('Turno')
+                        ->options(function ($get) {
+                            $schoolId = $get('school_id');
 
-                            return $school->shifts->pluck('name', 'id')->toArray() ?? [];
-                        }
+                            if ($schoolId) {
+                                $school = School::find($schoolId);
 
-                        return [];
-                    })
-                    ->required(),
-                Forms\Components\Select::make('grade_id')
-                    ->label('Série')
-                    ->required()
-                    ->options(function($get) {
-                        $schoolId = $get('school_id');
-                        
-                        if ($schoolId) {
-                            $school = School::find($schoolId);
-                            
-                            return $school->grades->pluck('name', 'id')->toArray() ?? [];
-                        }
+                                return $school->shifts->pluck('name', 'id')->toArray() ?? [];
+                            }
 
-                        return [];
-                    }),
+                            return [];
+                        })
+                        ->required(),
+                    Forms\Components\Select::make('grade_id')
+                        ->label('Série')
+                        ->required()
+                        ->options(function ($get) {
+                            $schoolId = $get('school_id');
+
+                            if ($schoolId) {
+                                $school = School::find($schoolId);
+
+                                return $school->grades->pluck('name', 'id')->toArray() ?? [];
+                            }
+
+                            return [];
+                        }),
                 ]),
             ]);
     }

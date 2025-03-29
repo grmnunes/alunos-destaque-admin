@@ -16,7 +16,8 @@ class Student extends Model
         'registration_number',
         'school_id',
         'shift_id',
-        'grade_id'
+        'grade_id',
+        'image',
     ];
 
     public function school()

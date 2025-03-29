@@ -6,11 +6,11 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Support\Enums\MaxWidth;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\MaxWidth;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -30,7 +30,7 @@ class GerenciadorPanelProvider extends PanelProvider
             ->login()
             ->colors([
                 'primary' => Color::Blue,
-                'secondary' => Color::Red
+                'secondary' => Color::Red,
             ])
             ->brandLogo(asset('dashboard/images/logo.png'))
             ->darkModeBrandLogo(asset('dashboard/images/logo-dark.png'))

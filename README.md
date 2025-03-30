@@ -14,8 +14,6 @@ Este projeto tem como objetivo registrar escolas públicas e seus alunos que for
 - Registro de alunos premiados
 - Associação de premiações a escolas e alunos
 - Painel administrativo para gerenciamento dos dados
-- Relatórios e gráficos sobre premiações
-
 
 ## 📜 Instalação
 

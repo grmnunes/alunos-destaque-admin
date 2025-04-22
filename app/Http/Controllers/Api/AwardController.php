@@ -10,7 +10,7 @@ class AwardController extends Controller
 {
     public function index()
     {
-        $awards = Award::orderBy('date', 'DESC')->get();
+        $awards = Award::orderBy('date', 'ASC')->get();
 
         return AwardResource::collection($awards);
     }
